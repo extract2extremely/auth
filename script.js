@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxSBKKVy_U9YpAUeB8pTYop78PG9lieiFCk3Tu2B0j_l3w9VqA05WGod9zzU2XiIxC/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0avxDGVNw4CS-640HRveeM9ZgBZpRYQHmDjiSKRjR0Y0iD8Tfc8NXFujHIXbxhklN/exec';
 
 async function createCredential() {
     try {
@@ -18,7 +18,7 @@ async function createCredential() {
         };
 
         const credential = await navigator.credentials.create({ publicKey: publicKeyCredentialCreationOptions });
-
+        
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             body: new URLSearchParams({
@@ -36,13 +36,30 @@ async function createCredential() {
     }
 }
 
+async function getCredentialIdFromSheet(userId) {
+    const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: new URLSearchParams({
+            action: 'getCredentialId',
+            userId: userId
+        })
+    });
+    const jsonResponse = await response.json();
+    return jsonResponse.credentialId;
+}
+
 async function authenticateUser() {
     try {
+        const credentialId = await getCredentialIdFromSheet('UZSL85T9AFC');
+        if (!credentialId) {
+            throw new Error("Credential ID not found");
+        }
+
         const randomStringFromServer = "random-string-from-server";
         const publicKeyCredentialRequestOptions = {
             challenge: Uint8Array.from(randomStringFromServer, c => c.charCodeAt(0)),
             allowCredentials: [{
-                id: Uint8Array.from(atob('<INSERT_CREDENTIAL_ID_FROM_GOOGLE_SHEET>'), c => c.charCodeAt(0)),
+                id: Uint8Array.from(atob(credentialId), c => c.charCodeAt(0)),
                 type: "public-key",
                 transports: ["internal"]
             }],
