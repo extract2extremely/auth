@@ -1,13 +1,13 @@
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0DVjJNzCY-_ghW-VZO5gx-bNWynrS8R5fnKC23s_p3WdsoPpx3auFb-4gCOGOKvIY/exec'; // Replace with your Google Apps Script URL
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxSBKKVy_U9YpAUeB8pTYop78PG9lieiFCk3Tu2B0j_l3w9VqA05WGod9zzU2XiIxC/exec';
 
-document.getElementById('registerButton').addEventListener('click', async () => {
+async function createCredential() {
     try {
         const randomStringFromServer = "random-string-from-server";
         const publicKeyCredentialCreationOptions = {
-            challenge: Uint8Array.from(randomStringFromServer, (c) => c.charCodeAt(0)),
+            challenge: Uint8Array.from(randomStringFromServer, c => c.charCodeAt(0)),
             rp: { name: "Your Application", id: window.location.hostname },
             user: {
-                id: Uint8Array.from("UZSL85T9AFC", (c) => c.charCodeAt(0)),
+                id: Uint8Array.from("UZSL85T9AFC", c => c.charCodeAt(0)),
                 name: "authtest",
                 displayName: "Authentication Test"
             },
@@ -24,7 +24,7 @@ document.getElementById('registerButton').addEventListener('click', async () => 
             body: new URLSearchParams({
                 action: 'saveCredential',
                 userId: 'UZSL85T9AFC',
-                credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))) // Base64 encode the credential ID
+                credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
             })
         });
 
@@ -34,19 +34,19 @@ document.getElementById('registerButton').addEventListener('click', async () => 
         document.getElementById('result').textContent = "Error registering fingerprint.";
         console.error(error);
     }
-});
+}
 
-document.getElementById('loginButton').addEventListener('click', async () => {
+async function authenticateUser() {
     try {
         const randomStringFromServer = "random-string-from-server";
-        const challenge = Uint8Array.from(randomStringFromServer, (c) => c.charCodeAt(0));
         const publicKeyCredentialRequestOptions = {
-            challenge: challenge,
+            challenge: Uint8Array.from(randomStringFromServer, c => c.charCodeAt(0)),
             allowCredentials: [{
-                id: Uint8Array.from(atob('<Your-Key-ID-Here>'), c => c.charCodeAt(0)), // Replace with your Base64 decoded key as an ArrayBuffer
+                id: Uint8Array.from(atob('<INSERT_CREDENTIAL_ID_FROM_GOOGLE_SHEET>'), c => c.charCodeAt(0)),
                 type: "public-key",
                 transports: ["internal"]
-            }]
+            }],
+            timeout: 60000
         };
 
         const assertion = await navigator.credentials.get({ publicKey: publicKeyCredentialRequestOptions });
@@ -56,7 +56,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
             body: new URLSearchParams({
                 action: 'verifyCredential',
                 userId: 'UZSL85T9AFC',
-                credentialId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId))) // Base64 encode the assertion ID
+                credentialId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)))
             })
         });
 
@@ -66,4 +66,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
         document.getElementById('result').textContent = "Error during login with fingerprint.";
         console.error(error);
     }
-});
+}
+
+document.getElementById('registerButton').addEventListener('click', createCredential);
+document.getElementById('loginButton').addEventListener('click', authenticateUser);
